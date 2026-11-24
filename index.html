@@ -14,12 +14,13 @@ body {
   color: #f5ead6;
   font-family: Arial, sans-serif;
   text-align: center;
-  padding: 20px;
+  padding: 15px;
+  margin: 0;
 }
 #reader {
   width: 100%;
   max-width: 400px;
-  margin: 20px auto;
+  margin: 15px auto;
   border-radius: 15px;
   overflow: hidden;
 }
@@ -35,35 +36,54 @@ button {
   color: #101b35;
 }
 #result {
-  font-size: 25px;
+  font-size: 20px;
   font-weight: bold;
-  padding: 20px;
+  padding: 10px;
+}
+#resultImage {
+  display: none;
+  width: 100%;
+  max-width: 450px;
+  max-height: 72vh;
+  object-fit: contain;
+  margin: 0 auto;
+  border-radius: 12px;
 }
 </style>
 </head>
 
 <body>
 
+<div id="heading">
 <h1>مريم ورضوان</h1>
 <p>30.12.2026</p>
 <h2>نظام دخول المدعوات</h2>
+</div>
 
 <div id="login">
   <input id="pin" type="password"
+    inputmode="numeric"
     placeholder="رمز المشرفة">
   <button onclick="login()">دخول</button>
 </div>
 
 <div id="panel" style="display:none">
   <div id="reader"></div>
+  <img id="resultImage" alt="">
+  <div id="result"></div>
   <button id="start" onclick="startScanner()">
     مسح الدعوة
   </button>
-  <div id="result"></div>
 </div>
 
 <script>
 const API = "https://script.google.com/macros/s/AKfycbwM3eijqxhHEhd5RE6uELW-Q0ry54GEjUGIk7fw26LgMiTgA-i13W89t_DqIXkx_ik/exec";
+
+const successImage = new Image();
+successImage.src = "success.png";
+
+const rejectedImage = new Image();
+rejectedImage.src = "rejected.png";
 
 let pin = "";
 let scanner;
@@ -82,9 +102,31 @@ function showResult(message, color) {
   result.style.color = color;
 }
 
+function showImage(success, message) {
+  const img = document.getElementById("resultImage");
+
+  document.getElementById("heading").style.display = "none";
+  document.getElementById("reader").style.display = "none";
+
+  img.src = success ? "success.png" : "rejected.png";
+  img.alt = message;
+  img.style.display = "block";
+
+  img.onerror = function() {
+    img.style.display = "none";
+  };
+
+  showResult(message, success ? "#8ee5a1" : "#ff9999");
+}
+
 async function startScanner() {
   busy = false;
+
+  document.getElementById("resultImage").style.display = "none";
+  document.getElementById("heading").style.display = "block";
+  document.getElementById("reader").style.display = "block";
   document.getElementById("start").disabled = true;
+
   showResult("وجهي الكاميرا نحو الباركود", "#f5ead6");
 
   try {
@@ -128,7 +170,7 @@ async function verifyTicket(text) {
   } catch(error) {}
 
   if (!/^[a-f0-9-]{36}$/i.test(token)) {
-    showResult("عذراً، الدعوة غير صالحة", "#ff7777");
+    showImage(false, "عذراً، الدعوة غير صالحة");
     return;
   }
 
@@ -149,15 +191,23 @@ async function verifyTicket(text) {
     const data = await response.json();
 
     if (data.ok === true) {
-      showResult("تم تأكيد الحضور بنجاح", "#8ee5a1");
+      showImage(true, "تم تأكيد الحضور بنجاح");
+
     } else if (data.code === "PIN") {
       alert("رمز المشرفة غير صحيح");
       document.getElementById("login").style.display = "block";
       document.getElementById("panel").style.display = "none";
       document.getElementById("pin").value = "";
       pin = "";
+
+    } else if (data.message === "تعذر التحقق من الدعوة") {
+      showResult(
+        "تعذر التحقق من نتيجة الدخول، راجعي سجل الحضور",
+        "#ffcc66"
+      );
+
     } else {
-      showResult(data.message || "الدعوة غير صالحة", "#ff7777");
+      showImage(false, data.message || "الدعوة غير صالحة");
     }
 
   } catch(error) {
