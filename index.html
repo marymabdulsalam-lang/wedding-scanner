@@ -1,1 +1,74 @@
 
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maryam & Ridwan</title>
+<style>
+body {
+  background: #101b35;
+  color: #f5ead6;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 20px;
+}
+#reader {
+  width: 100%;
+  max-width: 400px;
+  margin: 20px auto;
+  overflow: hidden;
+  border-radius: 15px;
+}
+button {
+  background: #f5ead6;
+  color: #101b35;
+  padding: 15px 25px;
+  border: none;
+  border-radius: 10px;
+  font-size: 18px;
+}
+</style>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body>
+
+<h1>مريم ورضوان</h1>
+<p>30.12.2026</p>
+<h2>نظام دخول المدعوات</h2>
+
+<div id="reader"></div>
+<button id="start" onclick="startScanner()">
+تشغيل الكاميرا
+</button>
+<p id="result">وجهي الكاميرا نحو الباركود</p>
+
+<script>
+async function startScanner() {
+  try {
+    const scanner = new Html5Qrcode("reader");
+
+    await scanner.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 230 },
+      function(decodedText) {
+        document.getElementById("result").textContent =
+          "تمت قراءة الباركود بنجاح";
+        scanner.stop();
+        document.getElementById("start").style.display = "";
+      },
+      function() {}
+    );
+
+    document.getElementById("start").style.display = "none";
+
+  } catch(error) {
+    document.getElementById("result").textContent =
+      String(error);
+  }
+}
+</script>
+
+</body>
+</html>
+
